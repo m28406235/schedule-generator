@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>    <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Schedule Generator</h1>            <button id="generateSchedulesBtn"
+                class="flex items-center justify-center px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-all duration-300">
+                Generate
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 xl:col-span-3 space-y-6">
+                <div id="courses-panel"></div>
+                <div id="constraints-panel-wrapper"></div>
+            </div>
+            <div id="right-panel" class="lg:col-span-8 xl:col-span-9">
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200" id="schedule-container">
+                    <div id="loading-state" class="hidden">
+                        <div class="flex flex-col items-center justify-center h-96 text-gray-500">
+                            <p class="text-lg font-medium">Generating schedules, please wait...</p>
+                        </div>
+                    </div>                    <div id="error-state" class="hidden">
+                        <div class="bg-white rounded-lg p-6 min-h-96">
+                            <div id="error-message" class="text-lg font-medium">An error occurred while generating schedules. Please review your
+                                inputs and constraints.</div>
+                        </div>
+                    </div>
+                    <div id="empty-state"
+                        class="flex flex-col items-center justify-center h-96 text-center text-gray-500">
+                        <p class="text-lg font-medium">No schedules available. Please add courses and constraints to
+                            proceed.</p>
+                    </div>
+                    <div id="schedule-display-area" class="hidden">
+                        <p class="text-lg font-medium">Displaying optimized schedules...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/constants.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/course-management.js"></script>
+    <script src="js/constraints.js"></script>
+    <script src="js/ui-renderer.js"></script>
+    <script src="js/schedule-generator.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
