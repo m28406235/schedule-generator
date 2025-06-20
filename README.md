@@ -27,7 +27,7 @@ A modern, web-based application for generating optimized academic schedules. Inp
 - **Exclude Days**: Block specific days from your schedule
 - **Exclude Periods**: Block specific time slots across all days
 - **Exclude Events**: Skip individual lectures/sections you don't want
-- **Sessions per Day**: Set minimum and maximum events per day (0-6 range)
+- **Sessions per Day**: Set minimum and maximum events per day (Min: 1-5, Max: 2-6)
 - **No Empty Periods**: Generate only gap-free schedules
 - **Ramadan Mode**: Special timing adjustments (75-min periods, 9 AM start)
 - **Smart validation**: Auto-corrects invalid min/max combinations
@@ -69,7 +69,7 @@ For each event:
 - **Excluded Days**: Select days when you're unavailable
 - **Excluded Periods**: Block specific time slots (Periods 1-6)  
 - **Excluded Events**: Skip individual lectures/sections
-- **Sessions per Day**: Set min/max required events per day (0-6)
+- **Sessions per Day**: Set min/max required events per day (Min: 1-5, Max: 2-6)
 - **No Empty Periods**: Enable for gap-free schedules only
 - **Special Modes**: Ramadan mode for adjusted timings
 - **Reset**: One-click restoration of all constraints to defaults
@@ -82,11 +82,13 @@ For each event:
 - **Visual color-coding** makes events easy to identify
 
 ### 5. 🔧 Handle Conflicts
-- **Smart error analysis** when no valid schedules exist
-- **Contextual suggestions** based on your specific course data
-- **Targeted recommendations** - only suggests changes that would actually help
-- **Clear visual guidance** for resolving scheduling conflicts
-- **Beautiful error messages** with helpful action items
+- **Intelligent error analysis** when no valid schedules exist
+- **Enhanced constraint suggestions** with specific, actionable recommendations
+- **Conflict detection** - identifies schedule conflicts and suggests solutions
+- **Contextual guidance** - explains exactly why constraints prevent scheduling
+- **Clear visual hierarchy** - red dots for critical issues, orange for preferences
+- **Detailed explanations** - shows current limits and suggested values
+- **Multiple solution paths** - provides several ways to resolve each conflict
 
 ### 6. 📊 Data Management
 - **Automatic saving** of all changes to browser storage
@@ -101,12 +103,13 @@ schedule-generator/
 ├── index.html              # Main application entry point
 ├── styles.css              # Custom styling and event themes
 ├── README.md               # Comprehensive documentation
+├── .gitignore              # Git ignore patterns
 └── js/
     ├── app.js              # Application initialization
     ├── constants.js        # Configuration (days, periods)
     ├── constraints.js      # Constraint validation & handling
     ├── course-management.js # Course CRUD operations  
-    ├── icons.js            # SVG icon components
+    ├── icons.js            # SVG icon components & visual elements
     ├── schedule-generator.js # Core scheduling algorithm
     ├── state.js            # Application state management
     ├── storage.js          # Local storage & import/export
@@ -199,6 +202,39 @@ Default constraint values (modifiable in `js/state.js`):
 
 ## 🆕 Recent Updates
 
+### Version 2.2 Features  
+- ✅ **Enhanced Constraint Error Messages**: All constraint suggestions now provide specific, actionable guidance
+  - 🔴 **Critical Issues**: Bold titles with clear explanations of what's blocking scheduling
+  - 🟠 **Optimization Suggestions**: Helpful tips for improving schedule quality
+  - 📊 **Detailed Context**: Shows current values vs. recommended values with explanations
+  - 🎯 **Conflict Detection**: Identifies specific time slot conflicts between courses
+  - 🔍 **Gap Analysis**: Pinpoints which days have unavoidable gaps between classes
+  - 📈 **Smart Calculations**: Suggests optimal min/max sessions based on your actual course load
+  - 💡 **Multiple Solutions**: Provides several different ways to resolve each constraint issue
+- ✅ **Smart Scrolling**: Intelligent scroll behavior after generating schedules
+  - 🎯 **Context Preservation**: Only scrolls when results area isn't visible
+  - 📱 **Perfect Positioning**: Shows navigation controls and schedule together
+  - ✨ **Smooth Animation**: Gentle scroll animation with optimal offset positioning
+- ✅ **Improved User Experience**: More helpful, less technical language in all error messages
+- ✅ **Visual Hierarchy**: Color-coded dots (red/orange/gray) clearly indicate priority levels
+- ✅ **Contextual Awareness**: Messages adapt based on your specific course and constraint setup
+
+### Version 2.1 Features  
+- ✅ **Enhanced Visual Feedback**: Unique, expressive icons for each application state
+  - 📖 Book icon for "No Courses Added" 
+  - 📋 Clipboard icon for "No Events Added"
+  - 📅 Calendar with dots for "No Time Slots Added"
+  - 🎯 Target icon for "No Required Events"
+  - ▶️ Play icon for "Ready to Generate"
+- ✅ **Consistent Error Messages**: All constraint and non-constraint errors use matching visual design
+- ✅ **Improved Constraint Suggestions**: Better alignment and actionable recommendations
+- ✅ **Smart State Management**: Error states clear automatically when requirements change
+- ✅ **Auto-Clear Generated Schedules**: Old schedules automatically clear when course data changes
+- ✅ **Constraint-Aware State Management**: Schedule clearing extends to all constraint modifications
+- ✅ **Intelligent Message Logic**: Differentiates between constraint and non-constraint error states
+- ✅ **Refined UX Flow**: Generate button only works when all requirements are met
+- ✅ **Code Quality**: Removed all comments for cleaner, production-ready code
+
 ### Version 2.0 Features
 - ✅ **New Optional Event Styling**: Dashed borders replace green theme
 - ✅ **Removed "(Online)" Labels**: Cleaner event display
@@ -210,6 +246,19 @@ Default constraint values (modifiable in `js/state.js`):
 - ✅ **Performance Optimizations**: Faster rendering and schedule generation
 
 ### Bug Fixes
+- ✅ **Smart Scrolling Implementation**: Generate button now uses intelligent scroll positioning
+- ✅ **Enhanced Constraint Messages**: All error messages now use bold titles and provide specific, actionable guidance
+- ✅ **Conflict Detection**: Added detection for time slot conflicts between required courses
+- ✅ **Improved Gap Analysis**: Shows which specific days have gap issues when "No Empty Periods" is enabled
+- ✅ **Better Context**: Error messages now explain current values vs. recommended values
+- ✅ **Smarter Suggestions**: Constraint recommendations adapt to your specific course load and available time slots
+- ✅ **Perfect Results Positioning**: Schedule navigation controls and results always visible after generation
+- ✅ **Visual Consistency**: All error and empty states now use unique, meaningful icons
+- ✅ **Message Alignment**: Fixed dot alignment in constraint suggestion lists
+- ✅ **State Synchronization**: Non-constraint errors update automatically after constraint errors
+- ✅ **Icon Integration**: Centralized icon management for maintainable UI components
+- ✅ **Schedule State Management**: Generated schedules clear when course data is modified
+- ✅ **Logic Consistency**: Both constraint and non-constraint error logic perfectly synchronized
 - ✅ **Optional Event Constraints**: Now properly respects sessions/day limits
 - ✅ **Empty Day Prevention**: Optional events won't create single-session days
 - ✅ **Input Validation**: Min/max values are properly sanitized

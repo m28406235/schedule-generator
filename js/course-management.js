@@ -2,15 +2,18 @@ function addCourse() {
     const newId = (courses.length > 0 ? Math.max(...courses.map(c => c.id)) : 0) + 1;
     setCoursesState([{ id: newId, name: '', events: [] }, ...courses]);
     courseOpenStates[newId] = true;
+    setGeneratedSchedulesState([]);
 }
 
 function updateCourse(courseId, newName) {
     setCoursesState(courses.map(c => c.id === courseId ? { ...c, name: newName } : c));
+    setGeneratedSchedulesState([]);
 }
 
 function deleteCourse(courseId) {
     setCoursesState(courses.filter(c => c.id !== courseId));
     delete courseOpenStates[courseId];
+    setGeneratedSchedulesState([]);
 }
 
 function addEvent(courseId) {
@@ -22,6 +25,7 @@ function addEvent(courseId) {
         }
         return c;
     }));
+    setGeneratedSchedulesState([]);
 }
 
 function updateEvent(courseId, eventId, field, value) {
@@ -38,6 +42,7 @@ function updateEvent(courseId, eventId, field, value) {
         }
         return c;
     }));
+    setGeneratedSchedulesState([]);
 }
 
 function deleteEvent(courseId, eventId) {
@@ -47,6 +52,7 @@ function deleteEvent(courseId, eventId) {
         }
         return c;
     }));
+    setGeneratedSchedulesState([]);
 }
 
 function addAppointment(courseId, eventId) {
@@ -63,6 +69,7 @@ function addAppointment(courseId, eventId) {
         }
         return c;
     }));
+    setGeneratedSchedulesState([]);
 }
 
 function updateAppointment(courseId, eventId, appIndex, field, value) {
@@ -81,6 +88,7 @@ function updateAppointment(courseId, eventId, appIndex, field, value) {
         }
         return c;
     }));
+    setGeneratedSchedulesState([]);
 }
 
 function deleteAppointment(courseId, eventId, appIndex) {
@@ -97,6 +105,7 @@ function deleteAppointment(courseId, eventId, appIndex) {
         }
         return c;
     }));
+    setGeneratedSchedulesState([]);
 }
 
 function toggleCourseOpen(courseId) {

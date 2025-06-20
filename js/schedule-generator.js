@@ -1,11 +1,56 @@
+function isReadyToGenerate() {
+    if (!courses || courses.length === 0) {
+        return false;
+    }
+    
+    const coursesWithEvents = courses.filter(course => course.events && course.events.length > 0);
+    if (coursesWithEvents.length === 0) {
+        return false;
+    }
+    
+    const eventsWithAppointments = courses.flatMap(course => 
+        course.events.filter(event => event.appointments && event.appointments.length > 0)
+    );
+    if (eventsWithAppointments.length === 0) {
+        return false;
+    }
+    
+    const requiredEvents = courses.flatMap(course => 
+        course.events.filter(event => 
+            event.attendance === 'must-attend' && 
+            event.appointments && 
+            event.appointments.length > 0 &&
+            !(constraints.excludedEvents || []).includes(`${course.id}-${event.id}`)
+        )
+    );
+    
+    if (requiredEvents.length === 0) {
+        return false;
+    }
+    
+    return true;
+}
+
 function generateSchedules() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!isReadyToGenerate()) {
+        return;
+    }
+    
+    const resultsArea = document.getElementById('schedule-container');
+    if (resultsArea) {
+        const rect = resultsArea.getBoundingClientRect();
+        if (rect.top > window.innerHeight || rect.bottom < 0) {
+            const yOffset = -60;
+            const y = resultsArea.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    }
     
     setIsLoadingState(true);
     setErrorState('');
     setGeneratedSchedulesState([]);
     
-    setTimeout(() => {        const mustAttendEvents = courses
+    setTimeout(() => {const mustAttendEvents = courses
             .flatMap(course => course.events
                 .filter(event => {
                     const eventKey = `${course.id}-${event.id}`;                    return event.attendance === 'must-attend' 
@@ -26,35 +71,13 @@ function generateSchedules() {
                 .map(event => ({ ...event, courseName: course.name || 'Unnamed Course', courseId: course.id }))
             );
 
-        const eventsToSchedule = mustAttendEvents;
-        
+        const eventsToSchedule = mustAttendEvents;        
         for (let i = eventsToSchedule.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [eventsToSchedule[i], eventsToSchedule[j]] = [eventsToSchedule[j], eventsToSchedule[i]];
-        }
-          if (courses.length === 0) {
-            setErrorState(`<div class="flex flex-col items-center justify-center h-96 text-center text-gray-500">
-                <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                </svg>
-                <p class="text-lg font-medium mb-2">No Courses Added</p>
-                <p class="text-gray-400">Please add courses to generate schedules</p>
-            </div>`);
-            setIsLoadingState(false);
-            return;
-        }
-        
-        if (eventsToSchedule.length === 0) {
-            setErrorState(`<div class="flex flex-col items-center justify-center h-96 text-center text-gray-500">
-                <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <p class="text-lg font-medium mb-2">No Required Events</p>
-                <p class="text-gray-400">Please add 'required' events with time slots to your courses</p>
-            </div>`);
-            setIsLoadingState(false);
-            return;
-        }const solutions = [];
+        }        setErrorState('');
+
+        const solutions = [];
         const seenSchedules = new Set();
 
         function calculateGaps(schedule) {
@@ -278,28 +301,34 @@ function generateSchedules() {
             }
         }        solve(0, []);        if (solutions.length === 0) {
             const suggestions = generateConstraintSuggestions();
-            setErrorState(`<div class="text-center mb-4">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+            const hasBasicRequirements = checkBasicRequirements();
+            
+            if (hasBasicRequirements) {
+                setErrorState(`<div class="text-center mb-4">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-red-800 mb-2">No Valid Schedules Found</h3>
+                    <p class="text-red-700 mb-6">The current constraints are too restrictive to generate any valid schedule combinations.</p>
                 </div>
-                <h3 class="text-xl font-semibold text-red-800 mb-2">No Valid Schedules Found</h3>
-                <p class="text-red-700 mb-6">The current constraints are too restrictive to generate any valid schedule combinations.</p>
-            </div>
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-                <div class="flex items-start">
-                    <svg class="w-5 h-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                    </svg>
-                    <div>
-                        <h4 class="font-medium text-blue-800 mb-2">Recommended Solutions:</h4>
-                        <div class="text-sm text-blue-700 space-y-1">
-                            ${suggestions}
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-blue-800 mb-2">Recommended Solutions:</h4>
+                            <div class="text-sm text-blue-700 space-y-1">
+                                ${suggestions}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>`);        } else {
+                </div>`);
+            } else {
+                setErrorState(suggestions);
+            }} else {
             solutions.sort((a, b) => {
                 if (a.gaps !== b.gaps) {
                     return a.gaps - b.gaps;
@@ -325,6 +354,211 @@ function generateSchedules() {
 
 function generateConstraintSuggestions() {
     const suggestions = [];
+    if (courses.length === 0) {
+        return `<div class="mb-4">${BookOpenIconSVG()}</div>
+        <h3 class="text-lg font-medium mb-2">No Courses Added</h3>
+        <p class="text-gray-400">Please add courses to generate schedules</p>`;
+    }
+    const coursesWithEvents = courses.filter(course => course.events && course.events.length > 0);
+    if (coursesWithEvents.length === 0) {
+        return `<div class="mb-4">${ClipboardListIconSVG()}</div>
+        <h3 class="text-lg font-medium mb-2">No Events Added</h3>
+        <p class="text-gray-400">Add events to your courses</p>`;
+    }
+    const eventsWithAppointments = courses.flatMap(course =>
+        course.events.filter(event => event.appointments && event.appointments.length > 0)
+    );
+    if (eventsWithAppointments.length === 0) {
+        return `<div class="mb-4">${CalendarDotsIconSVG()}</div>
+        <h3 class="text-lg font-medium mb-2">No Time Slots Added</h3>
+        <p class="text-gray-400">Add time slots to your events</p>`;
+    }
+    
+    const requiredEvents = courses.flatMap(course =>
+        course.events.filter(event => 
+            event.attendance === 'must-attend' && 
+            event.appointments && 
+            event.appointments.length > 0 &&
+            !(constraints.excludedEvents || []).includes(`${course.id}-${event.id}`)
+        )
+    );
+    
+    if (requiredEvents.length === 0) {
+        const optionalEvents = courses.flatMap(course =>
+            course.events.filter(event => 
+                event.attendance === 'online' && 
+                event.appointments && 
+                event.appointments.length > 0
+            )
+        );        if (optionalEvents.length > 0) {
+            return `<div class="mb-4">${TargetIconSVG()}</div>
+            <h3 class="text-lg font-medium mb-2">No Required Events</h3>
+            <p class="text-gray-400">Change some events from 'Optional' to 'Required'</p>`;
+        } else {
+            return `<div class="mb-4">${TargetIconSVG()}</div>
+            <h3 class="text-lg font-medium mb-2">No Required Events</h3>
+            <p class="text-gray-400">Mark some events as 'Required'</p>`;
+        }
+    }
+    
+    const availableSlots = new Set();
+    const eventsBySlot = new Map();
+    
+    requiredEvents.forEach(event => {
+        event.appointments.forEach(appointment => {
+            if (!constraints.excludedDays.includes(appointment.day) && 
+                !constraints.excludedPeriods.includes(appointment.period)) {
+                const slotKey = `${appointment.day}-${appointment.period}`;
+                availableSlots.add(slotKey);
+                if (!eventsBySlot.has(slotKey)) {
+                    eventsBySlot.set(slotKey, []);
+                }
+                eventsBySlot.get(slotKey).push(event);
+            }
+        });    });
+      const totalAvailableSlots = availableSlots.size;
+    
+    if (totalAvailableSlots < requiredEvents.length) {
+        const blockedDaysWithEvents = constraints.excludedDays.filter(day => {
+            return requiredEvents.some(event => 
+                event.appointments.some(app => app.day === day)
+            );
+        });
+        
+        const blockedPeriodsWithEvents = constraints.excludedPeriods.filter(period => {
+            return requiredEvents.some(event => 
+                event.appointments.some(app => app.period === period)
+            );
+        });
+        
+        const conflictingSlots = Array.from(eventsBySlot.entries()).filter(([slot, events]) => events.length > 1);
+        
+        if (conflictingSlots.length > 0) {
+            const conflictCount = conflictingSlots.length;
+            const slotWord = conflictCount === 1 ? 'slot' : 'slots';
+            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+                <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div><strong>Schedule conflicts detected</strong> - ${conflictCount} time ${slotWord} ${conflictCount === 1 ? 'has' : 'have'} multiple required events. Add alternative time options to conflicting courses</div>
+            </div>`);
+        }
+        
+        if (blockedDaysWithEvents.length > 0) {
+            const dayWord = blockedDaysWithEvents.length === 1 ? 'day' : 'days';
+            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+                <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div><strong>Enable ${blockedDaysWithEvents.join(', ')}</strong> - You've excluded ${blockedDaysWithEvents.length === 1 ? 'this' : 'these'} ${dayWord}, but your required courses need to be scheduled on ${blockedDaysWithEvents.length === 1 ? 'it' : 'them'}</div>
+            </div>`);
+        }
+        
+        if (blockedPeriodsWithEvents.length > 0) {
+            const periodNames = blockedPeriodsWithEvents.map(p => getPeriodTimes(constraints.ramadanMode)[p]).join(', ');
+            const timeWord = blockedPeriodsWithEvents.length === 1 ? 'time' : 'times';
+            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+                <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div><strong>Enable ${periodNames}</strong> - You've excluded ${blockedPeriodsWithEvents.length === 1 ? 'this' : 'these'} ${timeWord}, but your required courses are only available at ${blockedPeriodsWithEvents.length === 1 ? 'this time' : 'these times'}</div>
+            </div>`);
+        }
+    }
+      const availableWorkingDays = DAYS.filter(day => !constraints.excludedDays.includes(day)).length;
+    const maxPossibleEvents = availableWorkingDays * constraints.maxPerDay;
+    const minRequiredEvents = availableWorkingDays * constraints.minPerDay;
+      if (availableWorkingDays === 0) {
+        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+            <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div><strong>Enable at least one day</strong> - All weekdays (${DAYS.join(', ')}) are currently excluded. You must allow at least one day for scheduling</div>
+        </div>`);
+        return suggestions.slice(0, 3).join("");
+    }
+      if (requiredEvents.length > maxPossibleEvents) {
+        const suggestedMax = Math.min(6, Math.max(2, Math.ceil(requiredEvents.length / availableWorkingDays)));
+        const currentMax = constraints.maxPerDay;
+        const eventWord = requiredEvents.length === 1 ? 'event' : 'events';
+        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+            <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div><strong>Increase max sessions to ${suggestedMax}/day</strong> - You have ${requiredEvents.length} required ${eventWord} but your current limit of ${currentMax}/day only allows ${maxPossibleEvents} total slots</div>
+        </div>`);
+    }
+      if (requiredEvents.length < minRequiredEvents) {
+        const suggestedMin = Math.max(1, Math.min(5, Math.floor(requiredEvents.length / availableWorkingDays)));
+        const currentMin = constraints.minPerDay;
+        const eventWord = requiredEvents.length === 1 ? 'event' : 'events';
+        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+            <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div><strong>Reduce min sessions to ${suggestedMin}/day</strong> - You only have ${requiredEvents.length} required ${eventWord} but your current minimum of ${currentMin}/day requires ${minRequiredEvents} total slots</div>
+        </div>`);
+    }
+      if (constraints.noGaps !== false && requiredEvents.length > 2) {
+        const daySlots = new Map();
+        availableSlots.forEach(slot => {
+            const [day, period] = slot.split('-');
+            if (!daySlots.has(day)) {
+                daySlots.set(day, []);
+            }
+            daySlots.get(day).push(parseInt(period));
+        });
+        
+        let hasGapIssues = false;
+        const problematicDays = [];
+        for (const [day, periods] of daySlots.entries()) {
+            periods.sort((a, b) => a - b);
+            for (let i = 1; i < periods.length; i++) {
+                if (periods[i] - periods[i-1] > 1) {
+                    hasGapIssues = true;
+                    if (!problematicDays.includes(day)) {
+                        problematicDays.push(day);
+                    }
+                }
+            }
+        }
+          if (hasGapIssues && totalAvailableSlots >= requiredEvents.length) {
+            const dayList = problematicDays.length > 0 ? ` (gaps detected on ${problematicDays.join(', ')})` : '';
+            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+                <div class="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div><strong>Disable "No Empty Periods"</strong> - Your course time slots have unavoidable gaps between them${dayList}. Allow gaps to enable scheduling, or add consecutive time options to fill the gaps</div>
+            </div>`);
+        }    }      if ((constraints.excludedEvents || []).length > 0 && totalAvailableSlots < requiredEvents.length) {
+        const excludedCount = constraints.excludedEvents.length;
+        const eventWord = excludedCount === 1 ? 'event' : 'events';
+        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+            <div class="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div><strong>Include some excluded ${eventWord}</strong> - You've manually excluded ${excludedCount} ${eventWord}. Try re-enabling some to create more scheduling flexibility</div>
+        </div>`);
+    }
+    
+    if (totalAvailableSlots > 0 && totalAvailableSlots < requiredEvents.length && suggestions.length === 0) {
+        const shortage = requiredEvents.length - totalAvailableSlots;
+        const slotWord = shortage === 1 ? 'slot' : 'slots';
+        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
+            <div class="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div><strong>Add more time options</strong> - You need ${shortage} more time ${slotWord}. Add alternative appointment times to your events or reduce constraints to create more scheduling options</div>
+        </div>`);
+    }
+      if (suggestions.length === 0) {
+        return `<div class="flex items-start space-x-2 mb-2">
+            <div class="w-2 h-2 bg-gray-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div><strong>Complex scheduling conflict detected</strong> - Try adding more time slot alternatives to your events, reducing constraints, or adjusting min/max sessions per day limits</div>
+        </div>`;
+    }
+    
+    return suggestions.slice(0, 3).join("");
+}
+
+function checkBasicRequirements() {
+    if (courses.length === 0) {
+        return false;
+    }
+    
+    const coursesWithEvents = courses.filter(course => course.events && course.events.length > 0);
+    if (coursesWithEvents.length === 0) {
+        return false;
+    }
+    
+    const eventsWithAppointments = courses.flatMap(course => 
+        course.events.filter(event => event.appointments && event.appointments.length > 0)
+    );
+    if (eventsWithAppointments.length === 0) {
+        return false;
+    }
     
     const requiredEvents = courses.flatMap(course => 
         course.events.filter(event => 
@@ -335,127 +569,9 @@ function generateConstraintSuggestions() {
         )
     );
     
-    const allAvailableSlots = new Set();
-    const availableDays = new Set();
-    const availablePeriods = new Set();
-    
-    requiredEvents.forEach(event => {
-        event.appointments.forEach(appointment => {
-            allAvailableSlots.add(`${appointment.day}-${appointment.period}`);
-            availableDays.add(appointment.day);
-            availablePeriods.add(appointment.period);
-        });
-    });
-    
-    if (constraints.excludedDays.length > 0) {
-        const blockedDaysWithSessions = constraints.excludedDays.filter(day => 
-            availableDays.has(day)
-        );
-        if (blockedDaysWithSessions.length > 0) {
-            const dayNames = blockedDaysWithSessions.join(', ');
-            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Allow scheduling on <strong>${dayNames}</strong> - you have course sessions available on ${blockedDaysWithSessions.length === 1 ? 'this day' : 'these days'}</div>
-            </div>`);
-        }
+    if (requiredEvents.length === 0) {
+        return false;
     }
     
-    if (constraints.excludedPeriods.length > 0) {
-        const blockedPeriodsWithSessions = constraints.excludedPeriods.filter(period => 
-            availablePeriods.has(period)
-        );
-        if (blockedPeriodsWithSessions.length > 0) {
-            const periodList = blockedPeriodsWithSessions.map(p => `Period ${p}`).join(', ');
-            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Allow scheduling in <strong>${periodList}</strong> - you have course sessions available in ${blockedPeriodsWithSessions.length === 1 ? 'this time slot' : 'these time slots'}</div>
-            </div>`);
-        }
-    }
-    
-    if (constraints.noGaps !== false && requiredEvents.length > 2) {
-        const dayEventCounts = {};
-        requiredEvents.forEach(event => {
-            event.appointments.forEach(appointment => {
-                if (!constraints.excludedDays.includes(appointment.day) && 
-                    !constraints.excludedPeriods.includes(appointment.period)) {
-                    dayEventCounts[appointment.day] = (dayEventCounts[appointment.day] || 0) + 1;
-                }
-            });
-        });
-        
-        const hasSpreadOutEvents = Object.keys(dayEventCounts).length > 2 || 
-            Object.values(dayEventCounts).some(count => count === 1);
-        
-        if (hasSpreadOutEvents) {
-            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Disable the <strong>'No Empty Periods'</strong> option - your courses are spread across multiple days/times making gap-free scheduling difficult</div>
-            </div>`);
-        }
-    }
-    
-    if ((constraints.excludedEvents || []).length > 0) {
-        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-            <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-            <div>Include some of the <strong>${constraints.excludedEvents.length} excluded lecture/section(s)</strong> to provide more scheduling options</div>
-        </div>`);
-    }
-    
-    const totalRequiredEvents = requiredEvents.length;
-    const availableWorkingDays = DAYS.filter(day => !constraints.excludedDays.includes(day)).length;
-    
-    if (constraints.minPerDay > 1 && totalRequiredEvents > 0) {
-        const minRequiredDays = Math.ceil(totalRequiredEvents / constraints.maxPerDay);
-        const maxPossibleWithMinConstraint = availableWorkingDays * constraints.minPerDay;
-        
-        if (totalRequiredEvents < constraints.minPerDay * minRequiredDays || 
-            constraints.minPerDay > Math.floor(totalRequiredEvents / availableWorkingDays)) {
-            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Reduce the minimum lectures per day from <strong>${constraints.minPerDay}</strong> - you have ${totalRequiredEvents} required events across ${availableWorkingDays} available days</div>
-            </div>`);
-        }
-    }
-    
-    if (constraints.maxPerDay < 6 && totalRequiredEvents > 0) {
-        const maxPossibleEvents = availableWorkingDays * constraints.maxPerDay;
-        if (totalRequiredEvents > maxPossibleEvents) {
-            suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Increase the maximum lectures per day from <strong>${constraints.maxPerDay}</strong> - you need to fit ${totalRequiredEvents} events in ${availableWorkingDays} days</div>
-            </div>`);
-        }
-    }
-    
-    const totalAvailableSlots = DAYS.filter(day => !constraints.excludedDays.includes(day)).length * 
-                               (PERIOD_COUNT - constraints.excludedPeriods.length);
-    
-    if (totalRequiredEvents > totalAvailableSlots) {
-        suggestions.push(`<div class="flex items-start space-x-2 mb-2">
-            <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-            <div>Add more time slot options to your course events - you have ${totalRequiredEvents} required events but only ${totalAvailableSlots} available time slots</div>
-        </div>`);
-    }
-    
-    if (suggestions.length === 0) {
-        if (totalRequiredEvents === 0) {
-            return `<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Add required events with time slots to your courses, or check that events are marked as 'Required' instead of 'Optional'</div>
-            </div>`;
-        } else if (allAvailableSlots.size < 2) {
-            return `<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Add more time slot alternatives to your course events - each event needs multiple scheduling options</div>
-            </div>`;
-        } else {
-            return `<div class="flex items-start space-x-2 mb-2">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                <div>Try adjusting your constraints or adding more flexible time slot options to your events</div>
-            </div>`;
-        }
-    }
-    
-    return suggestions.slice(0, 4).join("");
+    return true;
 }

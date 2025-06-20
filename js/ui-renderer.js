@@ -161,11 +161,11 @@ function renderConstraintsPanel() {
                 <div class="flex items-center gap-4">
                     <div class="flex-1">
                         <label for="minPerDay" class="text-sm text-gray-500">Min</label>
-                        <input id="minPerDay" type="number" min="0" max="5" value="${constraints.minPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
+                        <input id="minPerDay" type="number" min="1" max="5" value="${constraints.minPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
                     </div>
                     <div class="flex-1">
                         <label for="maxPerDay" class="text-sm text-gray-500">Max</label>
-                        <input id="maxPerDay" type="number" min="1" max="6" value="${constraints.maxPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
+                        <input id="maxPerDay" type="number" min="2" max="6" value="${constraints.maxPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
                     </div>
                 </div>
             </div>
@@ -205,10 +205,9 @@ function renderConstraintsPanel() {
                 <button id="toggleEventsOpen" class="flex justify-between items-center w-full p-2 rounded-lg hover:bg-gray-100 text-left">
                     <span class="font-medium text-gray-700 flex items-center gap-2">Exclude Specific Events ${InfoIconSVG("Exclude specific lectures or sections from being scheduled.")}</span>
                     <svg class="w-5 h-5 transition-transform ${constraintOpenStates['excludeEvents'] ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <div id="excluded-events-list" class="p-2 space-y-2 ${constraintOpenStates['excludeEvents'] ? '' : 'hidden'}">
+                </button>                <div id="excluded-events-list" class="p-2 space-y-2 ${constraintOpenStates['excludeEvents'] ? '' : 'hidden'}">
                     ${courses.length === 0 ? 
-                        '<p class="text-sm text-gray-500 italic">Add courses first to exclude specific events</p>' :
+                        '<p class="text-sm text-gray-500">Add courses first to exclude specific events</p>' :
                         courses.map(course => {
                             if (course.events.length === 0) return '';
                             return `
@@ -256,9 +255,9 @@ function renderConstraintsPanel() {
     if (minPerDayEl) minPerDayEl.addEventListener('change', (e) => handleConstraintChange('minPerDay', e.target.value));
     if (maxPerDayEl) maxPerDayEl.addEventListener('change', (e) => handleConstraintChange('maxPerDay', e.target.value));
     if (toggleDaysOpenEl) toggleDaysOpenEl.addEventListener('click', () => toggleConstraintSection('excludeDays'));
-    if (togglePeriodsOpenEl) togglePeriodsOpenEl.addEventListener('click', () => toggleConstraintSection('excludePeriods'));
-    if (toggleEventsOpenEl) toggleEventsOpenEl.addEventListener('click', () => toggleConstraintSection('excludeEvents'));
-      const resetConstraintsBtn = document.getElementById('resetConstraintsBtn');
+    if (togglePeriodsOpenEl) togglePeriodsOpenEl.addEventListener('click', () => toggleConstraintSection('excludePeriods'));    if (toggleEventsOpenEl) toggleEventsOpenEl.addEventListener('click', () => toggleConstraintSection('excludeEvents'));
+    
+    const resetConstraintsBtn = document.getElementById('resetConstraintsBtn');
     if (resetConstraintsBtn) {
         resetConstraintsBtn.addEventListener('click', () => {
             resetConstraints();
@@ -282,26 +281,26 @@ function renderConstraintsPanel() {
 }
 
 function renderScheduleDisplay() {
-    const loadingStateDiv = document.getElementById('loading-state');
-    const errorStateDiv = document.getElementById('error-state');
+    const loadingStateDiv = document.getElementById('loading-state');    const errorStateDiv = document.getElementById('error-state');
     const emptyStateDiv = document.getElementById('empty-state');
     const scheduleDisplayArea = document.getElementById('schedule-display-area');
     const errorMessageDiv = document.getElementById('error-message');
     
+    if (error && !checkBasicRequirements()) {
+        error = '';
+    }
+    
     loadingStateDiv.classList.add('hidden');
     errorStateDiv.classList.add('hidden');
     emptyStateDiv.classList.add('hidden');
-    scheduleDisplayArea.classList.add('hidden');
-
-    if (isLoading) {
-        loadingStateDiv.classList.remove('hidden');    } else if (error) {
+    scheduleDisplayArea.classList.add('hidden');    if (isLoading) {
+        loadingStateDiv.classList.remove('hidden');
+    } else if (error) {
         errorStateDiv.classList.remove('hidden');
         if (errorMessageDiv) {
             errorMessageDiv.innerHTML = error;
         }
-    } else if (generatedSchedules.length === 0) {
-        emptyStateDiv.classList.remove('hidden');
-    } else {
+    } else if (generatedSchedules.length > 0) {
         scheduleDisplayArea.classList.remove('hidden');
         scheduleDisplayArea.innerHTML = renderScheduleNavigator() + renderScheduleGrid();
 
@@ -309,6 +308,77 @@ function renderScheduleDisplay() {
         const nextBtn = document.getElementById('nextScheduleBtn');
         if (prevBtn) prevBtn.addEventListener('click', () => setSelectedScheduleIndexState(Math.max(0, selectedScheduleIndex - 1)));
         if (nextBtn) nextBtn.addEventListener('click', () => setSelectedScheduleIndexState(Math.min(generatedSchedules.length - 1, selectedScheduleIndex + 1)));
+    } else {
+        emptyStateDiv.classList.remove('hidden');
+        const emptyStateContent = document.getElementById('empty-state-content');
+        const scheduleIconElement = document.getElementById('schedule-icon');
+        
+        if (emptyStateContent && scheduleIconElement) {
+            if (courses.length === 0) {
+                scheduleIconElement.innerHTML = BookOpenIconSVG();
+                emptyStateContent.innerHTML = `
+                    <h3 class="text-lg font-medium mb-2">No Courses Added</h3>
+                    <p class="text-gray-400">Please add courses to generate schedules</p>
+                `;
+            } else {
+                const coursesWithEvents = courses.filter(course => course.events && course.events.length > 0);
+                if (coursesWithEvents.length === 0) {
+                    scheduleIconElement.innerHTML = ClipboardListIconSVG();
+                    emptyStateContent.innerHTML = `
+                        <h3 class="text-lg font-medium mb-2">No Events Added</h3>
+                        <p class="text-gray-400">Add events to your courses</p>
+                    `;
+                } else {
+                    const eventsWithAppointments = courses.flatMap(course => 
+                        course.events.filter(event => event.appointments && event.appointments.length > 0)
+                    );
+                    if (eventsWithAppointments.length === 0) {
+                        scheduleIconElement.innerHTML = CalendarDotsIconSVG();
+                        emptyStateContent.innerHTML = `
+                            <h3 class="text-lg font-medium mb-2">No Time Slots Added</h3>
+                            <p class="text-gray-400">Add time slots to your events</p>
+                        `;
+                    } else {                        const requiredEvents = courses.flatMap(course => 
+                            course.events.filter(event => 
+                                event.attendance === 'must-attend' && 
+                                event.appointments && 
+                                event.appointments.length > 0 &&
+                                !(constraints.excludedEvents || []).includes(`${course.id}-${event.id}`)
+                            )
+                        );
+                        
+                        if (requiredEvents.length === 0) {
+                            const optionalEvents = courses.flatMap(course =>
+                                course.events.filter(event => 
+                                    event.attendance === 'online' && 
+                                    event.appointments && 
+                                    event.appointments.length > 0
+                                )
+                            );
+                            if (optionalEvents.length > 0) {
+                                scheduleIconElement.innerHTML = TargetIconSVG();
+                                emptyStateContent.innerHTML = `
+                                    <h3 class="text-lg font-medium mb-2">No Required Events</h3>
+                                    <p class="text-gray-400">Change some events from 'Optional' to 'Required'</p>
+                                `;
+                            } else {
+                                scheduleIconElement.innerHTML = TargetIconSVG();
+                                emptyStateContent.innerHTML = `
+                                    <h3 class="text-lg font-medium mb-2">No Required Events</h3>
+                                    <p class="text-gray-400">Mark some events as 'Required'</p>
+                                `;
+                            }
+                        } else {
+                            scheduleIconElement.innerHTML = PlayIconSVG();
+                            emptyStateContent.innerHTML = `
+                                <h3 class="text-lg font-medium mb-2">Ready to Generate</h3>
+                                <p class="text-gray-400">Click the 'Generate' button to create your schedules</p>
+                            `;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

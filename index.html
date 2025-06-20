@@ -32,15 +32,16 @@
                             <p class="text-lg font-medium">Generating schedules, please wait...</p>
                         </div>
                     </div>                    <div id="error-state" class="hidden">
-                        <div class="bg-white rounded-lg p-6 min-h-96">
-                            <div id="error-message" class="text-lg font-medium">An error occurred while generating schedules. Please review your
+                        <div class="flex flex-col items-center justify-center h-96 text-gray-500">
+                            <div id="error-message" class="text-lg font-medium text-center">An error occurred while generating schedules. Please review your
                                 inputs and constraints.</div>
                         </div>
-                    </div>
-                    <div id="empty-state"
+                    </div>                    <div id="empty-state"
                         class="flex flex-col items-center justify-center h-96 text-center text-gray-500">
-                        <p class="text-lg font-medium">No schedules available. Please add courses and constraints to
-                            proceed.</p>
+                        <div class="mb-4">
+                            <div id="schedule-icon"></div>
+                        </div>                        <div id="empty-state-content">
+                        </div>
                     </div>
                     <div id="schedule-display-area" class="hidden">
                         <p class="text-lg font-medium">Displaying optimized schedules...</p>

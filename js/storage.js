@@ -17,8 +17,7 @@ function loadFromLocalStorage() {
             const data = JSON.parse(savedData);
             if (data.courses && Array.isArray(data.courses)) {
                 courses = data.courses;            }
-            
-            if (data.constraints) {
+              if (data.constraints) {
                 constraints = { 
                     ramadanMode: false,
                     excludedDays: [],
@@ -29,6 +28,16 @@ function loadFromLocalStorage() {
                     maxPerDay: 3,
                     ...data.constraints 
                 };
+                
+                if (typeof constraints.minPerDay === 'number') {
+                    constraints.minPerDay = Math.max(1, Math.min(5, constraints.minPerDay));
+                }
+                if (typeof constraints.maxPerDay === 'number') {
+                    constraints.maxPerDay = Math.max(2, Math.min(6, constraints.maxPerDay));
+                }
+                if (constraints.minPerDay > constraints.maxPerDay) {
+                    constraints.maxPerDay = constraints.minPerDay;
+                }
             }
         }
     } catch (error) {

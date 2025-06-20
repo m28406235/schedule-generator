@@ -25,12 +25,14 @@ function setCoursesState(newCourses) {
     saveToLocalStorage();
     renderInputPanel();
     renderConstraintsPanel();
+    renderScheduleDisplay();
 }
 
 function setConstraintsState(newConstraints) {
     constraints = newConstraints;
     saveToLocalStorage();
     renderConstraintsPanel();
+    renderScheduleDisplay();
 }
 
 function setGeneratedSchedulesState(schedules) {
@@ -93,6 +95,7 @@ function resetConstraints() {
         excludeEvents: false
     };
     
+    setGeneratedSchedulesState([]);
     saveToLocalStorage();
     renderConstraintsPanel();
     
