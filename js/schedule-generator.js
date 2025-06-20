@@ -1,4 +1,6 @@
 function generateSchedules() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     setIsLoadingState(true);
     setErrorState('');
     setGeneratedSchedulesState([]);
@@ -8,10 +10,9 @@ function generateSchedules() {
                 .filter(event => {
                     const eventKey = `${course.id}-${event.id}`;                    return event.attendance === 'must-attend' 
                         && event.appointments 
-                        && event.appointments.length > 0
-                        && !(constraints.excludedEvents || []).includes(eventKey);
+                        && event.appointments.length > 0                        && !(constraints.excludedEvents || []).includes(eventKey);
                 })
-                .map(event => ({ ...event, courseName: course.name, courseId: course.id }))
+                .map(event => ({ ...event, courseName: course.name || 'Unnamed Course', courseId: course.id }))
             );
         
         const onlineEvents = courses
@@ -22,7 +23,7 @@ function generateSchedules() {
                         && event.appointments.length > 0
                         && !(constraints.excludedEvents || []).includes(eventKey);
                 })
-                .map(event => ({ ...event, courseName: course.name, courseId: course.id }))
+                .map(event => ({ ...event, courseName: course.name || 'Unnamed Course', courseId: course.id }))
             );
 
         const eventsToSchedule = mustAttendEvents;
@@ -91,7 +92,7 @@ function generateSchedules() {
             if (!validDayCounts) {
                 return false;
             }
-              if (constraints.noGaps !== false) {
+              if (constraints.noGaps !== false && schedule.length > 0) {
                 const gaps = calculateGaps(schedule);
                 return gaps === 0;
             }
@@ -132,10 +133,13 @@ function generateSchedules() {
                     
                     const isSlotTaken = schedule.some(item => 
                         item.day === appointment.day && item.period === appointment.period
-                    );
-                      if (!isSlotTaken) {
+                    );                      if (!isSlotTaken) {
                         if (daySchedules[appointment.day]) {
                             const dayEvents = daySchedules[appointment.day];
+                              if (dayEvents.length >= constraints.maxPerDay) {
+                                continue;
+                            }
+                            
                             const earliestPeriod = dayEvents[0].period;
                             const latestPeriod = dayEvents[dayEvents.length - 1].period;
                             
@@ -183,8 +187,11 @@ function generateSchedules() {
                                 daySchedules[appointment.day].sort((a, b) => a.period - b.period);
                                 added = true;
                                 break;
+                            }                        } else {
+                            if (constraints.minPerDay > 1) {
+                                continue;
                             }
-                        } else {
+                            
                             schedule.push({
                                 courseName: onlineEvent.courseName,
                                 courseId: onlineEvent.courseId,

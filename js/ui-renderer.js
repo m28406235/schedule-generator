@@ -24,14 +24,17 @@ function renderInputPanel() {
             </div>
             <div class="space-y-4" id="courses-list">
                 ${coursesHtml}
-            </div>
-        </div>    `;    
+            </div>        </div>
+    `;
+    
     const addCourseBtn = document.getElementById('addCourseBtn');
     if (addCourseBtn) addCourseBtn.addEventListener('click', addCourse);
     const saveBtn = document.getElementById('saveCourses');
     const loadBtn = document.getElementById('loadCourses');
     if (saveBtn) saveBtn.addEventListener('click', saveCourses);
-    if (loadBtn) loadBtn.addEventListener('click', loadCourses);    courses.forEach(course => {
+    if (loadBtn) loadBtn.addEventListener('click', loadCourses);
+    
+    courses.forEach(course => {
         const courseElement = document.getElementById(`course-item-${course.id}`);
         if (courseElement) {
             const courseNameInput = courseElement.querySelector(`#course-name-${course.id}`);
@@ -46,7 +49,8 @@ function renderInputPanel() {
                 if (eventElement) {
                     const eventTypeSelect = eventElement.querySelector(`#event-type-${course.id}-${event.id}`);
                     if (eventTypeSelect) eventTypeSelect.addEventListener('change', (e) => updateEvent(course.id, event.id, 'type', e.target.value));
-                    const eventAttendanceSelect = eventElement.querySelector(`#event-attendance-${course.id}-${event.id}`);                    if (eventAttendanceSelect) eventAttendanceSelect.addEventListener('change', (e) => updateEvent(course.id, event.id, 'attendance', e.target.value));
+                    const eventAttendanceSelect = eventElement.querySelector(`#event-attendance-${course.id}-${event.id}`);
+                    if (eventAttendanceSelect) eventAttendanceSelect.addEventListener('change', (e) => updateEvent(course.id, event.id, 'attendance', e.target.value));
                     const deleteEventBtn = eventElement.querySelector(`#delete-event-${course.id}-${event.id}`);
                     if (deleteEventBtn) deleteEventBtn.addEventListener('click', () => deleteEvent(course.id, event.id));
                     
@@ -79,7 +83,7 @@ function renderCourseItem(course) {
     return `
         <div class="border border-gray-200 rounded-lg p-3" id="course-item-${course.id}">
             <div class="flex justify-between items-center">
-                <input type="text" value="${course.name}" placeholder="New Course ${course.id}" id="course-name-${course.id}" class="font-semibold text-lg border-b-2 border-transparent focus:border-indigo-500 outline-none w-full bg-transparent"/>
+                <input type="text" value="${course.name || ''}" placeholder="Course Name" id="course-name-${course.id}" class="font-semibold text-lg border-b-2 border-transparent focus:border-indigo-500 outline-none w-full bg-transparent"/>
                 <div>
                     <button id="toggle-course-${course.id}" class="p-1.5 text-gray-500 hover:text-gray-800 rounded-full hover:bg-gray-100"><svg class="w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
                     <button id="delete-course-${course.id}" class="p-1.5 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100">${Trash2IconSVG()}</button>
@@ -104,14 +108,15 @@ function renderEventItem(courseId, event) {
                     <select id="event-type-${courseId}-${event.id}" class="text-xs rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="lecture" ${event.type === 'lecture' ? 'selected' : ''}>Lecture</option>
                         <option value="section" ${event.type === 'section' ? 'selected' : ''}>Section</option>
-                    </select>
-                    <select id="event-attendance-${courseId}-${event.id}" class="text-xs rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">                        <option value="must-attend" ${event.attendance === 'must-attend' ? 'selected' : ''}>Required</option>
+                    </select>                    <select id="event-attendance-${courseId}-${event.id}" class="text-xs rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="must-attend" ${event.attendance === 'must-attend' ? 'selected' : ''}>Required</option>
                         <option value="online" ${event.attendance === 'online' ? 'selected' : ''}>Optional</option>
                     </select>
-                    ${InfoIconSVG("Events marked 'Must Attend' are included in the schedule. 'Online' events are placed at the beginning or end of days when possible.")}
+                    ${InfoIconSVG("Events marked 'Required' are included in the schedule. 'Optional' events are placed at the beginning or end of days when possible.")}
                 </div>
                 <button id="delete-event-${courseId}-${event.id}" class="p-1 text-red-500 hover:bg-red-100 rounded-full ml-1">${Trash2IconSVG()}</button>
-            </div>            <div class="space-y-2">
+            </div>
+            <div class="space-y-2">
                 <p class="text-xs text-gray-500">Define all possible time slots for this event. The generator will pick one.</p>
                 ${(event.appointments || []).map((app, index) => `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
@@ -121,7 +126,7 @@ function renderEventItem(courseId, event) {
                         <select id="appointment-period-${courseId}-${event.id}-${index}" class="w-full rounded border-gray-300">
                             ${periodTimesForEvent.map((time, i) => `<option value="${i}" ${app.period === i ? 'selected' : ''}>${time}</option>`).join('')}
                         </select>
-                        <input type="text" placeholder="Room" value="${app.room}" id="appointment-room-${courseId}-${event.id}-${index}" class="md:col-span-2 w-full rounded border-gray-300" />
+                        <input type="text" placeholder="Room" value="${app.room || ''}" id="appointment-room-${courseId}-${event.id}-${index}" class="md:col-span-2 w-full rounded border-gray-300" />
                         <button id="delete-appointment-${courseId}-${event.id}-${index}" class="text-red-500 text-xs md:col-span-2 justify-self-end hover:underline">Remove</button>
                     </div>
                 `).join('')}
@@ -134,9 +139,9 @@ function renderEventItem(courseId, event) {
 function renderConstraintsPanel() {
     const periodTimesForConstraints = getPeriodTimes(constraints.ramadanMode);
     constraintsPanelWrapper.innerHTML = `
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">${SettingsIconSVG()} Constraints</h2>
-              <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100">
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200">            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">${SettingsIconSVG()} Constraints</h2>
+            
+            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100">
                 <label for="ramadanMode" class="font-medium text-gray-700 flex items-center gap-2">Ramadan Mode ${InfoIconSVG("Adjusts schedule for Ramadan: periods become 75 mins, starting at 9:00 AM.")}</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="ramadanMode" ${constraints.ramadanMode ? 'checked' : ''} class="sr-only peer"/>
@@ -149,20 +154,21 @@ function renderConstraintsPanel() {
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="noGaps" ${constraints.noGaps !== false ? 'checked' : ''} class="sr-only peer"/>
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-            </div>
-              <div class="p-2 mt-2">
+                </label>            </div>
+            
+            <div class="p-2 mt-2">
                 <label class="font-medium text-gray-700 block mb-1 flex items-center gap-2">Sessions / Day ${InfoIconSVG("Define min/max 'required' events per day in the generated schedule.")}</label>
                 <div class="flex items-center gap-4">
                     <div class="flex-1">
                         <label for="minPerDay" class="text-sm text-gray-500">Min</label>
-                        <input id="minPerDay" type="number" min="1" max="5" value="${constraints.minPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
+                        <input id="minPerDay" type="number" min="0" max="5" value="${constraints.minPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
                     </div>
                     <div class="flex-1">
                         <label for="maxPerDay" class="text-sm text-gray-500">Max</label>
-                        <input id="maxPerDay" type="number" min="2" max="6" value="${constraints.maxPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
+                        <input id="maxPerDay" type="number" min="1" max="6" value="${constraints.maxPerDay}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
                     </div>
-                </div>            </div>
+                </div>
+            </div>
 
             <div class="mt-2">
                 <button id="toggleDaysOpen" class="flex justify-between items-center w-full p-2 rounded-lg hover:bg-gray-100 text-left">
@@ -190,7 +196,8 @@ function renderConstraintsPanel() {
                             <button class="p-2 text-sm rounded transition-colors ${isExcluded ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" data-period="${period}">
                                 ${periodTimesForConstraints[period]}
                             </button>
-                        `;    }).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
             
@@ -244,11 +251,10 @@ function renderConstraintsPanel() {
     const maxPerDayEl = document.getElementById('maxPerDay');
     const toggleDaysOpenEl = document.getElementById('toggleDaysOpen');
     const togglePeriodsOpenEl = document.getElementById('togglePeriodsOpen');
-    const toggleEventsOpenEl = document.getElementById('toggleEventsOpen');
-      if (ramadanModeEl) ramadanModeEl.addEventListener('change', (e) => handleConstraintChange('ramadanMode', e.target.checked));
+    const toggleEventsOpenEl = document.getElementById('toggleEventsOpen');    if (ramadanModeEl) ramadanModeEl.addEventListener('change', (e) => handleConstraintChange('ramadanMode', e.target.checked));
     if (noGapsEl) noGapsEl.addEventListener('change', (e) => handleConstraintChange('noGaps', e.target.checked));
-    if (minPerDayEl) minPerDayEl.addEventListener('change', (e) => handleConstraintChange('minPerDay', Number(e.target.value)));
-    if (maxPerDayEl) maxPerDayEl.addEventListener('change', (e) => handleConstraintChange('maxPerDay', Number(e.target.value)));
+    if (minPerDayEl) minPerDayEl.addEventListener('change', (e) => handleConstraintChange('minPerDay', e.target.value));
+    if (maxPerDayEl) maxPerDayEl.addEventListener('change', (e) => handleConstraintChange('maxPerDay', e.target.value));
     if (toggleDaysOpenEl) toggleDaysOpenEl.addEventListener('click', () => toggleConstraintSection('excludeDays'));
     if (togglePeriodsOpenEl) togglePeriodsOpenEl.addEventListener('click', () => toggleConstraintSection('excludePeriods'));
     if (toggleEventsOpenEl) toggleEventsOpenEl.addEventListener('click', () => toggleConstraintSection('excludeEvents'));
@@ -336,11 +342,9 @@ function renderScheduleGrid() {
                 <span>${day}</span>
             </div>
             ${periodTimesForGrid.map((time, periodIndex) => {
-                const event = currentSchedule.find(item => item.day === day && item.period === periodIndex);
-                let eventTypeClass = '';
-                if (event) {
+                const event = currentSchedule.find(item => item.day === day && item.period === periodIndex);                let eventTypeClass = '';                if (event) {
                     if (event.isOnline) {
-                        eventTypeClass = 'online-event';
+                        eventTypeClass = event.type === 'lecture' ? 'optional-lecture-event' : 'optional-section-event';
                     } else if (event.type === 'lecture') {
                         eventTypeClass = 'lecture-event';
                     } else {
@@ -349,9 +353,8 @@ function renderScheduleGrid() {
                 }
                 return `
                     <div class="bg-gray-50 p-1.5 schedule-grid-cell flex items-center justify-center">
-                        ${event ? `
-                            <div class="w-full h-full p-2 rounded-lg shadow-sm flex flex-col justify-center items-center text-center text-xs border ${eventTypeClass}">
-                                <span class="font-semibold">${event.courseName}${event.isOnline ? ' (Online)' : ''}</span>
+                        ${event ? `                            <div class="w-full h-full p-2 rounded-lg shadow-sm flex flex-col justify-center items-center text-center text-xs border ${eventTypeClass}">
+                                <span class="font-semibold">${event.courseName || 'Unnamed Course'}</span>
                                 ${event.room ? `<span class="text-gray-600 text-opacity-80">(${event.room})</span>` : ''}
                             </div>
                         ` : ''}

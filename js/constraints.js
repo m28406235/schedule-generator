@@ -1,5 +1,17 @@
 function handleConstraintChange(key, value) {
-    setConstraintsState({ ...constraints, [key]: value });
+    if (key === 'minPerDay' || key === 'maxPerDay') {
+        const numValue = Math.max(0, Math.min(6, Number(value) || 0));
+        if (key === 'minPerDay' && numValue > constraints.maxPerDay) {
+            setConstraintsState({ ...constraints, minPerDay: numValue, maxPerDay: numValue });
+        } else if (key === 'maxPerDay' && numValue < constraints.minPerDay) {
+            setConstraintsState({ ...constraints, minPerDay: numValue, maxPerDay: numValue });
+        } else {
+            setConstraintsState({ ...constraints, [key]: numValue });
+        }
+    } else {
+        setConstraintsState({ ...constraints, [key]: value });
+    }
+    
     if (key === 'ramadanMode') {
         renderInputPanel();
     }

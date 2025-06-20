@@ -32,9 +32,16 @@ body {
     border-color: #3b82f6;
 }
 
-.online-event {
-    background-color: #f0fdf4;
-    color: #166534;
-    border-color: #22c55e;
+.optional-lecture-event {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-color: #ef4444;
+    border-style: dashed;
+}
+
+.optional-section-event {
+    background-color: #e0f2fe;
+    color: #1e40af;
+    border-color: #3b82f6;
     border-style: dashed;
 }

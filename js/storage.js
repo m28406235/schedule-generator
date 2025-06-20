@@ -73,12 +73,18 @@ function loadCourses() {
                 if (!data.courses || !Array.isArray(data.courses)) {
                     throw new Error('Invalid file');
                 }
-                
-                const normalizedCourses = data.courses.map(course => ({
-                    ...course,
+                  const normalizedCourses = data.courses.map(course => ({
+                    id: course.id || Date.now(),
+                    name: course.name || '',
                     events: (course.events || []).map(event => ({
-                        ...event,
-                        appointments: event.appointments || []
+                        id: event.id || Date.now(),
+                        attendance: event.attendance || 'must-attend', 
+                        type: event.type || 'lecture',
+                        appointments: (event.appointments || []).map(app => ({
+                            day: app.day || 'Saturday',
+                            period: app.period || 0,
+                            room: app.room || ''
+                        }))
                     }))
                 }));
                 
